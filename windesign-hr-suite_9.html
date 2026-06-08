@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windesign — HR & Invoice Suite</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+  :root{
+    --green:#1f4e3d; --green-dark:#163a2d; --green-light:#e8f0ec;
+    --gold:#b08948; --gold-light:#f5eed8;
+    --paper:#faf8f4; --card:#ffffff; --line:#ddd9d0;
+    --ink:#1c1c1c; --muted:#6b6460; --danger:#9b3022;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Source Serif 4',Georgia,serif;background:var(--paper);color:var(--ink);font-size:13px}
+
+  /* ── TOP BAR ── */
+  .topbar{background:var(--green);color:#fff;padding:0;border-bottom:3px solid var(--gold)}
+  .topbar-inner{max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
+  .brand{font-family:'Playfair Display',serif;font-size:20px;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+  .brand-sub{font-family:'Source Serif 4',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-top:2px}
+  .tag{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;opacity:.6;font-family:'Source Serif 4',serif}
+
+  /* ── NAV ── */
+  .nav{background:var(--card);border-bottom:1px solid var(--line);padding:0 32px;display:flex;gap:0;overflow-x:auto}
+  .nav button{background:none;border:none;padding:15px 20px;font-size:12px;font-family:'Source Serif 4',serif;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.15s}
+  .nav button:hover{color:var(--ink)}
+  .nav button.active{color:var(--green);border-bottom-color:var(--gold);font-weight:600}
+
+  /* ── LAYOUT ── */
+  .wrap{max-width:1280px;margin:28px auto;padding:0 32px;display:grid;grid-template-columns:460px 1fr;gap:28px}
+  @media(max-width:1060px){.wrap{grid-template-columns:1fr}}
+
+  /* ── FORM PANEL ── */
+  .panel{background:var(--card);border:1px solid var(--line);padding:26px}
+  .panel h2{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--green);margin-bottom:4px}
+  .panel .sub{font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.5;font-style:italic}
+  .seg{display:flex;border:1px solid var(--green);overflow:hidden;margin-bottom:18px}
+  .seg button{flex:1;background:none;border:none;padding:10px;font-size:12px;font-family:'Source Serif 4',serif;cursor:pointer;color:var(--green);transition:.15s}
+  .seg button.on{background:var(--green);color:#fff}
+  fieldset{border:none;margin-bottom:18px}
+  fieldset legend{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:10px;display:block;padding-bottom:6px;border-bottom:1px solid var(--line);width:100%}
+  label{display:block;font-size:11px;color:var(--muted);margin:10px 0 3px;font-style:italic}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);font-size:12px;font-family:'Source Serif 4',serif;background:#fff;color:var(--ink);border-radius:2px;transition:.15s}
+  input[readonly]{background:var(--green-light);font-weight:700;color:var(--green)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .items{width:100%;border-collapse:collapse}
+  .items th{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);text-align:left;padding:6px 3px;font-weight:600}
+  .items td{padding:3px 2px}
+  .items input{padding:6px 7px;font-size:11px}
+  .additem{background:none;border:1px dashed var(--green);color:var(--green);padding:7px 12px;font-size:11px;cursor:pointer;margin-top:8px;font-family:'Source Serif 4',serif}
+  .additem:hover{background:var(--green-light)}
+  .delrow{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;padding:0 5px}
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+  .btn{padding:11px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:'Source Serif 4',serif;letter-spacing:.3px;transition:.15s}
+  .btn-pri{background:var(--green);color:#fff;grid-column:1/3}
+  .btn-pri:hover{background:var(--green-dark)}
+  .btn-sec{background:#fff;color:var(--green);border:1px solid var(--green)}
+  .btn-sec:hover{background:var(--green-light)}
+  .hint{background:var(--green-light);border-left:3px solid var(--gold);padding:9px 13px;font-size:11px;color:var(--green);margin-bottom:16px;font-style:italic}
+
+  /* ── PREVIEW SHELL ── */
+  .preview-shell{background:#c8c4bc;padding:24px;overflow:auto;max-height:86vh}
+
+  /* ── INVOICE PAPER ── */
+  .invoice{background:#fff;width:100%;max-width:580px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:11px;font-family:'Source Serif 4',Georgia,serif}
+  .inv-head{padding:28px 32px 20px;display:flex;justify-content:space-between;align-items:flex-start}
+  .inv-co{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--green);line-height:1.2}
+  .inv-co small{font-family:'Source Serif 4',serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;display:block;margin-top:2px}
+  .inv-title-block{text-align:right}
+  .inv-title-block h3{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--green);letter-spacing:2px}
+  .inv-title-block .sub{font-size:10px;color:var(--muted);margin-top:4px;font-style:italic}
+  .inv-divider{height:2px;background:var(--green);margin:0 32px}
+  .inv-meta{padding:16px 32px;display:flex;justify-content:space-between;gap:20px;background:#fafafa;border-bottom:1px solid var(--line)}
+  .inv-meta .col{flex:1}
+  .inv-meta .lbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:600;margin-bottom:3px}
+  .inv-meta .val{font-size:11px;font-weight:600;color:var(--ink)}
+  .inv-meta .val.big{font-size:13px;color:var(--green)}
+  .billing{padding:16px 32px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .billing h4{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:600;margin-bottom:6px}
+  .billing p{font-size:10.5px;line-height:1.65;color:#444}
+  table.lines{width:calc(100% - 64px);margin:4px 32px 0;border-collapse:collapse}
+  table.lines thead tr{background:var(--green)}
+  table.lines th{color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.8px;padding:9px 8px;text-align:left;font-weight:600;font-family:'Source Serif 4',serif}
+  table.lines th.r,table.lines td.r{text-align:right}
+  table.lines th.c,table.lines td.c{text-align:center}
+  table.lines td{padding:11px 8px;font-size:10.5px;border-bottom:1px solid #efefef;color:#333}
+  .tot-wrap{padding:8px 32px;display:flex;justify-content:flex-end}
+  .tot-box{width:56%;border-top:1px solid var(--line)}
+  .tot-row{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;color:#555}
+  .tot-grand{border-top:2px solid var(--green);margin-top:4px;padding-top:9px;font-size:16px;font-weight:700;color:var(--green);font-family:'Playfair Display',serif}
+  .inv-footer{padding:20px 32px;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);margin-top:12px}
+  .inv-decl{font-size:9.5px;color:#666;max-width:55%;line-height:1.5}
+  .inv-sig{text-align:center;font-size:9px;color:#888}
+  .inv-sig .cursive{font-family:'Brush Script MT',cursive;font-size:24px;color:#333;display:block;margin-bottom:2px}
+  .inv-bank{background:var(--green-light);border-top:2px solid var(--green);padding:16px 32px}
+  .inv-bank .bank-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--green);font-weight:700;margin-bottom:10px}
+  .inv-bank .grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:9.5px;color:#444}
+  .inv-bank .grid b{color:var(--green)}
+  .inv-bank .pay{font-size:9px;color:var(--muted);margin-top:8px;font-style:italic}
+
+  /* ── HISTORY ── */
+  .hist{max-width:1280px;margin:28px auto;padding:0 32px}
+  .hist .panel{padding:0;overflow:hidden}
+  .hist-top{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px}
+  .hist-top h2{font-family:'Playfair Display',serif;font-size:20px;color:var(--green)}
+  .hist-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hist-controls select{padding:7px 10px;font-size:12px;width:auto;font-family:'Source Serif 4',serif;border:1px solid var(--line)}
+  table.htbl{width:100%;border-collapse:collapse}
+  table.htbl th{background:var(--green-light);font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--green);padding:12px 16px;text-align:left;font-weight:700}
+  table.htbl td{padding:12px 16px;font-size:12px;border-bottom:1px solid var(--line)}
+  table.htbl tr:hover td{background:var(--gold-light)}
+  .badge{font-size:10px;font-weight:600;padding:3px 9px;border:1px solid}
+  .badge.ind{background:#e8f0ec;color:var(--green);border-color:#aacfbc}
+  .badge.intl{background:var(--gold-light);color:#7a5c1e;border-color:#d4aa6a}
+  .mini{background:none;border:1px solid var(--line);padding:5px 10px;font-size:11px;cursor:pointer;margin-right:4px;color:var(--ink);font-family:'Source Serif 4',serif;transition:.15s}
+  .mini:hover{border-color:var(--green);color:var(--green)}
+  .mini.del:hover{border-color:var(--danger);color:var(--danger)}
+  .mini.tmpl{border-color:var(--green);color:var(--green);font-weight:600}
+  .mini.tmpl:hover{background:var(--green);color:#fff}
+  .empty{padding:60px 20px;text-align:center;color:var(--muted);font-size:13px;font-style:italic}
+  .stat{display:flex;gap:24px;font-size:11px;color:var(--muted);margin-top:6px}
+  .stat b{color:var(--green);font-size:18px;font-family:'Playfair Display',serif;display:block}
+
+  /* ── MISC ── */
+  .soon{text-align:center;padding:80px 30px;color:var(--muted)}
+  .soon h2{font-family:'Playfair Display',serif;color:var(--green);font-size:22px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Windesign<div class="brand-sub">HR &amp; Invoice Suite</div></div>
+    <span class="tag">Internal Tooling</span>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="active" data-tab="invoice">Create Invoice</button>
+  <button data-tab="history">Invoice History</button>
+  <button data-tab="offer">Offer Letter</button>
+  <button data-tab="internship">Internship Letter</button>
+  <button data-tab="appraisal">Appraisal Letter</button>
+  <button data-tab="payslip">Salary Slip</button>
+</div>
+
+<div id="tab-invoice">
+<div class="wrap">
+  <div class="panel">
+    <h2>Create Invoice</h2>
+    <p class="sub">GST invoice for Indian clients · Export invoice for international clients. Tip: to repeat a client, go to Invoice History → "Use as Template".</p>
+
+    <div class="seg">
+      <button id="mIND" class="on" onclick="setMode('IND')">GST Invoice (India)</button>
+      <button id="mINT" onclick="setMode('INT')">Export Invoice (Intl)</button>
+    </div>
+    <div class="hint" id="hint"></div>
+
+    <fieldset>
+      <legend>Provider (You)</legend>
+      <label>Name</label><input id="pName" value="Windesign Labs (OPC) Pvt. Ltd." oninput="render()">
+      <label>Address</label><textarea id="pAddr" rows="2" oninput="render()">FLAT NO 808 RACHANA, ASHWINI APT JAGDISH NAGAR, Katolroad, Nagpur, Nagpur- 440013, Maharashtra</textarea>
+      <div class="row">
+        <div><label>Country</label><input id="pCountry" value="India" oninput="render()"></div>
+        <div><label>Your GSTIN</label><input id="pGstin" value="27AADCW8668C1ZZ" oninput="render()"></div>
+      </div>
+      <div class="row3">
+        <div><label>Mobile</label><input id="pMobile" value="+919730627087" oninput="render()"></div>
+        <div><label>Web</label><input id="pWeb" value="windesign.io" oninput="render()"></div>
+        <div><label>Email</label><input id="pEmail" value="jitu@windesign.io" oninput="render()"></div>
+      </div>
+      <label>CIN (shown on GST invoices)</label><input id="pCin" value="U62010MH2024OPC427928" oninput="render()">
+    </fieldset>
+
+    <fieldset>
+      <legend>Customer</legend>
+      <label>Name</label><input id="cName" value="BRUCIRA ONLINE SOLUTIONS PRIVATE LIMITED" oninput="render()">
+      <label>Address</label><textarea id="cAddr" rows="2" oninput="render()">Powai Plaza Chs Ltd, Powai, Mumbai</textarea>
+      <div class="row">
+        <div><label>Country</label><input id="cCountry" value="India" oninput="render()"></div>
+        <div class="ind-only"><label>Customer GSTIN</label><input id="cGstin" value="27AAHCB8903D1ZS" oninput="render()"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Invoice Meta</legend>
+      <div class="row">
+        <div><label>Invoice No. (auto)</label><input id="invNo" readonly style="background:#f4f5f7;font-weight:700"></div>
+        <div><label>Date</label><input id="invDate" type="date" oninput="render()"></div>
+      </div>
+      <div class="row3">
+        <div><label>Reverse charge</label>
+          <select id="revCharge" onchange="render()"><option>No</option><option>Yes</option></select></div>
+        <div><label>Mode of Transport</label><input id="transport" value="Digital" oninput="render()"></div>
+        <div><label>Currency</label>
+          <select id="curr" onchange="render()">
+            <option value="INR">INR</option><option value="USD">USD</option>
+            <option value="GBP">GBP</option><option value="EUR">EUR</option><option value="AED">AED</option>
+          </select></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Services</legend>
+      <table class="items">
+        <thead><tr><th>Service Name</th><th style="width:54px">Qty</th><th style="width:84px">Rate</th><th style="width:30px"></th></tr></thead>
+        <tbody id="itemRows"></tbody>
+      </table>
+      <button class="additem" onclick="addItem()">+ Add service</button>
+    </fieldset>
+
+    <fieldset class="ind-only">
+      <legend>GST</legend>
+      <div class="row">
+        <div><label>Tax line 1 label</label><input id="t1lbl" value="IGST 9%" oninput="render()"></div>
+        <div><label>Rate %</label><input id="t1rate" type="number" value="9" oninput="render()"></div>
+      </div>
+      <div class="row">
+        <div><label>Tax line 2 label</label><input id="t2lbl" value="SGST 9%" oninput="render()"></div>
+        <div><label>Rate %</label><input id="t2rate" type="number" value="9" oninput="render()"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Bank Details</legend>
+      <label>Account Name</label><input id="bName" value="WINDESIGN LABS (OPC) PRIVATE LIMITED" oninput="render()">
+      <div class="row">
+        <div><label>Account Number</label><input id="bAcc" value="87306270872" oninput="render()"></div>
+        <div><label>IFSC</label><input id="bIfsc" value="IDFB0042504" oninput="render()"></div>
+      </div>
+      <div class="row">
+        <div><label>SWIFT</label><input id="bSwift" value="IDFBINBBMUM" oninput="render()"></div>
+        <div><label>Bank Name</label><input id="bBank" value="IDFC FIRST" oninput="render()"></div>
+      </div>
+      <label>Branch</label><input id="bBranch" value="NAGPUR - BYRAMJI TOWN BRANCH" oninput="render()">
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn btn-pri" onclick="saveInvoice()">Save to History</button>
+      <button class="btn btn-sec" onclick="exportPDF()">Download PDF</button>
+      <button class="btn btn-sec" onclick="exportWord()">Download Word</button>
+    </div>
+  </div>
+
+  <div class="panel" style="padding:0;border:none;background:none">
+    <div class="preview-shell"><div class="invoice" id="paper"></div></div>
+  </div>
+</div>
+</div>
+
+<div id="tab-history" style="display:none">
+<div class="hist">
+  <div class="panel">
+    <div class="hist-top">
+      <div>
+        <h2>Invoice History</h2>
+        <div class="stat" style="margin-top:8px">
+          <div><b id="stCount">0</b>Total invoices</div>
+          <div><b id="stInd">0</b>Indian</div>
+          <div><b id="stInt">0</b>International</div>
+        </div>
+      </div>
+      <div class="hist-controls">
+        <select id="fType" onchange="renderHistory()">
+          <option value="">All types</option><option value="IND">Indian only</option><option value="INT">International only</option>
+        </select>
+        <select id="fMonth" onchange="renderHistory()"><option value="">All months</option></select>
+        <button class="btn btn-sec" style="padding:8px 14px" onclick="exportExcel()">Export Excel</button>
+        <button class="btn btn-pri" style="padding:8px 14px;grid-column:auto" onclick="backupData()">Backup All Data</button>
+        <button class="btn btn-sec" style="padding:8px 14px" onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
+        <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="restoreData(this)">
+      </div>
+    </div>
+    <div id="histBody"></div>
+  </div>
+</div>
+</div>
+
+<div id="tab-offer" style="display:none">
+<div class="wrap">
+  <div class="panel">
+    <h2>Offer Letter</h2>
+    <p class="sub">Generate a formal offer letter for a new employee. Download as PDF or Word.</p>
+    <fieldset><legend>Candidate Details</legend>
+      <div class="row"><div><label>Candidate Full Name</label><input id="ol_name" value="Rahul Sharma" oninput="renderOffer()"></div>
+      <div><label>Designation / Role</label><input id="ol_role" value="UI/UX Designer" oninput="renderOffer()"></div></div>
+      <div class="row"><div><label>Department</label><input id="ol_dept" value="Design" oninput="renderOffer()"></div>
+      <div><label>Date of Joining</label><input id="ol_joining" type="date" oninput="renderOffer()"></div></div>
+      <div class="row"><div><label>Work Location</label><input id="ol_location" value="Nagpur, Maharashtra" oninput="renderOffer()"></div>
+      <div><label>Reporting Manager</label><input id="ol_manager" value="Jitu Mistry" oninput="renderOffer()"></div></div>
+    </fieldset>
+    <fieldset><legend>CTC &amp; Salary Breakdown (Annual)</legend>
+      <div class="row"><div><label>Basic Salary (₹/yr)</label><input id="ol_basic" type="number" value="300000" oninput="renderOffer()"></div>
+      <div><label>HRA (₹/yr)</label><input id="ol_hra" type="number" value="120000" oninput="renderOffer()"></div></div>
+      <div class="row"><div><label>Special Allowance (₹/yr)</label><input id="ol_special" type="number" value="60000" oninput="renderOffer()"></div>
+      <div><label>Other Allowance (₹/yr)</label><input id="ol_other" type="number" value="0" oninput="renderOffer()"></div></div>
+      <label style="margin-top:10px;font-weight:700;color:var(--green)">Total CTC: <span id="ol_ctc">₹4,80,000</span> per annum</label>
+    </fieldset>
+    <fieldset><legend>Terms</legend>
+      <div class="row"><div><label>Probation Period</label>
+        <select id="ol_probation" onchange="renderOffer()"><option>3 months</option><option>6 months</option><option>1 year</option></select></div>
+      <div><label>Notice Period</label>
+        <select id="ol_notice" onchange="renderOffer()"><option>30 days</option><option>60 days</option><option>90 days</option></select></div></div>
+      <label>Offer Letter Date</label><input id="ol_date" type="date" oninput="renderOffer()">
+      <label>Additional Terms / Notes</label>
+      <textarea id="ol_notes" rows="2" oninput="renderOffer()">This offer is subject to satisfactory background verification and submission of required documents.</textarea>
+    </fieldset>
+    <div class="actions">
+      <button class="btn btn-pri" onclick="exportOfferPDF()">Download PDF</button>
+      <button class="btn btn-sec" onclick="exportOfferWord()">Download Word</button>
+    </div>
+  </div>
+  <div class="panel" style="padding:0;border:none;background:none">
+    <div class="preview-shell"><div id="offerPaper" style="background:#fff;max-width:600px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.15)"></div></div>
+  </div>
+</div>
+</div>
+
+<div id="tab-internship" style="display:none">
+<div class="wrap">
+  <div class="panel">
+    <h2>Internship Letter</h2>
+    <p class="sub">Generate an internship joining letter or a completion/experience certificate.</p>
+    <div class="seg">
+      <button id="il_joining_btn" class="on" onclick="setInternMode('joining')">Joining / Offer Letter</button>
+      <button id="il_completion_btn" onclick="setInternMode('completion')">Completion Certificate</button>
+    </div>
+    <fieldset><legend>Intern Details</legend>
+      <div class="row"><div><label>Intern Full Name</label><input id="il_name" value="Priya Patel" oninput="renderIntern()"></div>
+      <div><label>College / University</label><input id="il_college" value="VNIT Nagpur" oninput="renderIntern()"></div></div>
+      <div class="row"><div><label>Internship Role</label><input id="il_role" value="Framer Design Intern" oninput="renderIntern()"></div>
+      <div><label>Department</label><input id="il_dept" value="Design" oninput="renderIntern()"></div></div>
+      <div class="row"><div><label>Start Date</label><input id="il_start" type="date" oninput="renderIntern()"></div>
+      <div><label>End Date</label><input id="il_end" type="date" oninput="renderIntern()"></div></div>
+      <div class="row"><div><label>Monthly Stipend (₹)</label><input id="il_stipend" type="number" value="5000" oninput="renderIntern()"></div>
+      <div><label>Mentor / Supervisor</label><input id="il_mentor" value="Jitu Mistry" oninput="renderIntern()"></div></div>
+    </fieldset>
+    <fieldset id="il_completion_fields" style="display:none"><legend>Completion Details</legend>
+      <label>Performance / Feedback Line</label>
+      <textarea id="il_feedback" rows="2" oninput="renderIntern()">demonstrated exceptional skills and a proactive attitude throughout the internship period.</textarea>
+      <label>Certificate Issue Date</label><input id="il_issue_date" type="date" oninput="renderIntern()">
+    </fieldset>
+    <fieldset><legend>Letter Details</legend>
+      <label>Letter Date</label><input id="il_date" type="date" oninput="renderIntern()">
+      <label>Additional Notes</label>
+      <textarea id="il_notes" rows="2" oninput="renderIntern()">This internship is unpaid/paid as per the stipend mentioned. Work from office unless otherwise communicated.</textarea>
+    </fieldset>
+    <div class="actions">
+      <button class="btn btn-pri" onclick="exportInternPDF()">Download PDF</button>
+      <button class="btn btn-sec" onclick="exportInternWord()">Download Word</button>
+    </div>
+  </div>
+  <div class="panel" style="padding:0;border:none;background:none">
+    <div class="preview-shell"><div id="internPaper" style="background:#fff;max-width:600px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.15)"></div></div>
+  </div>
+</div>
+</div>
+
+<div id="tab-appraisal" style="display:none">
+<div class="wrap">
+  <div class="panel">
+    <h2>Appraisal Letter</h2>
+    <p class="sub">Generate a formal appraisal letter with promotion, revised salary, and performance note.</p>
+    <fieldset><legend>Employee Details</legend>
+      <div class="row"><div><label>Employee Full Name</label><input id="ap_name" value="Rahul Sharma" oninput="renderAppraisal()"></div>
+      <div><label>Employee ID</label><input id="ap_id" value="WD-001" oninput="renderAppraisal()"></div></div>
+      <div class="row"><div><label>Current Designation</label><input id="ap_old_role" value="UI/UX Designer" oninput="renderAppraisal()"></div>
+      <div><label>New Designation</label><input id="ap_new_role" value="Senior UI/UX Designer" oninput="renderAppraisal()"></div></div>
+      <div class="row"><div><label>Department</label><input id="ap_dept" value="Design" oninput="renderAppraisal()"></div>
+      <div><label>Effective Date</label><input id="ap_effective" type="date" oninput="renderAppraisal()"></div></div>
+    </fieldset>
+    <fieldset><legend>Revised Salary (Annual ₹)</legend>
+      <div class="row"><div><label>Previous CTC</label><input id="ap_old_ctc" type="number" value="480000" oninput="renderAppraisal()"></div>
+      <div><label>New Basic</label><input id="ap_basic" type="number" value="360000" oninput="renderAppraisal()"></div></div>
+      <div class="row"><div><label>New HRA</label><input id="ap_hra" type="number" value="144000" oninput="renderAppraisal()"></div>
+      <div><label>Special Allowance</label><input id="ap_special" type="number" value="72000" oninput="renderAppraisal()"></div></div>
+      <div class="row"><div><label>Other Allowance</label><input id="ap_other" type="number" value="0" oninput="renderAppraisal()"></div>
+      <div><label style="font-weight:700;color:var(--green)">New CTC: <span id="ap_new_ctc">₹5,76,000</span>/yr</label><div style="height:10px"></div></div></div>
+    </fieldset>
+    <fieldset><legend>Performance Note</legend>
+      <label>Performance Summary</label>
+      <textarea id="ap_perf" rows="3" oninput="renderAppraisal()">You have consistently delivered high-quality work and demonstrated strong leadership qualities. Your contributions to the team have been invaluable and we look forward to your continued growth.</textarea>
+      <label>Letter Date</label><input id="ap_date" type="date" oninput="renderAppraisal()">
+    </fieldset>
+    <div class="actions">
+      <button class="btn btn-pri" onclick="exportAppraisalPDF()">Download PDF</button>
+      <button class="btn btn-sec" onclick="exportAppraisalWord()">Download Word</button>
+    </div>
+  </div>
+  <div class="panel" style="padding:0;border:none;background:none">
+    <div class="preview-shell"><div id="appraisalPaper" style="background:#fff;max-width:600px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.15)"></div></div>
+  </div>
+</div>
+</div>
+
+<div id="tab-payslip" style="display:none"><div class="soon"><h2>Salary Slip</h2><p>Coming next.</p></div></div>
+
+<script>
+let MODE='IND';
+let items=[{desc:'Framer Website Development advance',qty:1,rate:60000}];
+const CUR={INR:'\u20B9',USD:'$',GBP:'\u00A3',EUR:'\u20AC',AED:'AED '};
+const LS='windesign_invoices_v2';
+const SEQ='windesign_seq_v2';
+const SEEDED='windesign_seeded_v2';
+
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+window.addEventListener('load',function(){
+  document.getElementById('invDate').value=new Date().toISOString().slice(0,10);
+  seedIfFirstRun();
+  setMode('IND');renderItems();nextNumber();render();populateMonthFilter();renderHistory();
+});
+
+function seedIfFirstRun(){
+  if(localStorage.getItem(SEEDED))return;
+  if((load(LS,[])).length>0){localStorage.setItem(SEEDED,'1');return;}
+  var P={pName:'Windesign Labs (OPC) Pvt. Ltd.',
+    pAddr:'FLAT NO 808 RACHANA, ASHWINI APT JAGDISH NAGAR, Katolroad, Nagpur, Nagpur- 440013, Maharashtra',
+    pCountry:'India',pGstin:'27AADCW8668C1ZZ',pMobile:'+919730627087',
+    pWeb:'windesign.io',pEmail:'jitu@windesign.io'};
+  var B={bName:'WINDESIGN LABS (OPC) PRIVATE LIMITED',bAcc:'87306270872',
+    bIfsc:'IDFB0042504',bSwift:'IDFBINBBMUM',bBank:'IDFC FIRST',
+    bBranch:'NAGPUR - BYRAMJI TOWN BRANCH'};
+  var CIN='U62010MH2024OPC427928';
+  function mk(mode,no,date,cust,cAddr,cCountry,cGstin,curr,desc,qty,rate,t1,t2){
+    var sub=rate,tax=0;
+    if(mode==='IND'){tax=sub*0.09*2;}
+    return {id:Date.now()+Math.floor(Math.random()*100000),mode:mode,invNo:no,
+      date:date,month:date.slice(0,7).replace('-',''),customer:cust,currency:curr,
+      sub:sub,tax:tax,grand:sub+tax,
+      snapshot:{p:P,b:B,
+        c:{cName:cust,cAddr:cAddr,cCountry:cCountry,cGstin:cGstin||''},
+        invDate:date,revCharge:'No',transport:'Digital',curr:curr,
+        t1lbl:t1||'IGST 9%',t2lbl:t2||'SGST 9%',t1rate:'9',t2rate:'9',
+        invNo:no,pCin:CIN,mode:mode,
+        items:[{desc:desc,qty:qty,rate:rate}]}};
+  }
+  var seeds=[
+    mk('IND','IND2601','2026-04-09','BRUCIRA ONLINE SOLUTIONS PRIVATE LIMITED',
+      'Powai Plaza Chs Ltd, Powai, Mumbai','India','27AAHCB8903D1ZS','INR',
+      'Framer Website Development advance',1,60000),
+    mk('INT','INT2601','2026-04-04','Dub Technologies INC',
+      '2261 Market Street STE 5906 San Francisco, CA 94114','USA','','USD',
+      'Framer Partner commission - Dub Partners payout','Multiple Commissions',6881.48),
+    mk('INT','INT2602','2026-04-12','Leverbrands Ltd',
+      '138 Hepworth Court. 30 Gatliff Road. SW1W 8QP','United Kingdom','','USD',
+      'Leverbrands website development',1,700),
+    mk('INT','INT2603','2026-04-20','MatchMove Pay Pte Ltd',
+      '137 Telok Ayer Street #03-03 Singapore 068602','Singapore','','USD',
+      'Matchmove Web Framer Development - Final payment',1,1800),
+    mk('INT','INT2604','2026-04-22','Dub Technologies INC',
+      '2261 Market Street STE 5906 San Francisco, CA 94114','USA','','USD',
+      'Framer Partner commission - Dub Partners payout','Multiple Commissions',5000)
+  ];
+  // newest first to match unshift convention
+  seeds.reverse();
+  save(LS,seeds);
+  // sequence: highest used number per type per year (year '26')
+  save(SEQ,{IND:{'26':1},INT:{'26':4}});
+  localStorage.setItem(SEEDED,'1');
+}
+
+document.querySelectorAll('.nav button').forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll('.nav button').forEach(function(x){x.classList.remove('active')});
+    b.classList.add('active');
+    ['invoice','history','offer','internship','appraisal','payslip'].forEach(function(t){
+      document.getElementById('tab-'+t).style.display=(t===b.dataset.tab)?'block':'none'});
+    if(b.dataset.tab==='history'){populateMonthFilter();renderHistory()}
+  };
+});
+
+function setMode(m){
+  MODE=m;
+  document.getElementById('mIND').classList.toggle('on',m==='IND');
+  document.getElementById('mINT').classList.toggle('on',m==='INT');
+  var ind=m==='IND';
+  document.querySelectorAll('.ind-only').forEach(function(e){e.style.display=ind?'':'none'});
+  document.getElementById('curr').value=ind?'INR':'USD';
+  document.getElementById('hint').textContent=ind
+    ?'GST Invoice: shows CIN, your & customer GSTIN, two editable tax lines (your template uses IGST 9% + SGST 9%). Numbering prefix: IND.'
+    :'Export Invoice: no GST/tax shown, foreign currency, customer GSTIN hidden. Numbering prefix: INT.';
+  nextNumber();renderItems();render();
+}
+
+function pad2(n){return String(n).padStart(2,'0')}
+function yy(dateStr){return (dateStr||'').slice(2,4)}
+function nextNumber(){
+  var seq=load(SEQ,{IND:{},INT:{}});
+  var y=yy(document.getElementById('invDate').value);
+  var cur=(seq[MODE][y]||0)+1;
+  document.getElementById('invNo').value=MODE+y+pad2(cur);
+}
+document.getElementById('invDate').addEventListener('change',nextNumber);
+
+function addItem(){items.push({desc:'',qty:1,rate:0});renderItems();render()}
+function delItem(i){items.splice(i,1);renderItems();render()}
+function renderItems(){
+  var tb=document.getElementById('itemRows');tb.innerHTML='';
+  items.forEach(function(it,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><input value="'+esc(it.desc)+'" oninput="upd('+i+',\'desc\',this.value)"></td>'+
+      '<td><input type="number" value="'+it.qty+'" oninput="upd('+i+',\'qty\',this.value)"></td>'+
+      '<td><input type="number" value="'+it.rate+'" oninput="upd('+i+',\'rate\',this.value)"></td>'+
+      '<td><button class="delrow" onclick="delItem('+i+')">&times;</button></td>';
+    tb.appendChild(tr);
+  });
+}
+function upd(i,k,v){items[i][k]=(k==='qty'||k==='rate')?parseFloat(v)||0:v;render()}
+function esc(s){return(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function g(id){return document.getElementById(id).value}
+function curSym(){return CUR[g('curr')]||''}
+function money(n){return curSym()+Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}
+
+function calc(){
+  var sub=items.reduce(function(a,it){return a+it.qty*it.rate},0);
+  var taxRows=[],tax=0;
+  if(MODE==='IND'){
+    var r1=parseFloat(g('t1rate'))||0,r2=parseFloat(g('t2rate'))||0;
+    var a1=sub*r1/100,a2=sub*r2/100;
+    taxRows=[[g('t1lbl'),a1],[g('t2lbl'),a2]];tax=a1+a2;
+  }
+  return{sub:sub,taxRows:taxRows,tax:tax,grand:sub+tax};
+}
+
+function fmtDate(d){if(!d)return'';var x=new Date(d);return x.getDate()+' '+x.toLocaleString('en',{month:'long'})+' '+x.getFullYear()}
+
+function render(){
+  var ind=MODE==='IND';var c=calc();
+  var rows=items.map(function(it,i){return '<tr><td class="c">'+(i+1)+'</td><td>'+esc(it.desc)+
+    '</td><td class="c">'+it.qty+'</td><td class="r">'+money(it.rate)+
+    '</td><td class="r">'+money(it.qty*it.rate)+'</td></tr>'}).join('');
+  var taxHtml=c.taxRows.map(function(t){
+    return '<div class="tot-row"><span>'+esc(t[0])+' :</span><span>'+money(t[1])+'</span></div>'}).join('');
+
+  document.getElementById('paper').innerHTML=
+  // Header
+  '<div class="inv-head">'+
+    '<div>'+
+      '<div class="inv-co">'+esc(g('pName'))+'<small>Invoice for Design Services</small></div>'+
+    '</div>'+
+    '<div class="inv-title-block">'+
+      '<h3>INVOICE</h3>'+
+      '<div class="sub">'+(ind?'GST Invoice &nbsp;·&nbsp; CIN: '+esc(g('pCin')):'Export Invoice')+'</div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="inv-divider"></div>'+
+  // Meta strip
+  '<div class="inv-meta">'+
+    '<div class="col"><div class="lbl">Invoice No.</div><div class="val big">'+esc(g('invNo'))+'</div></div>'+
+    '<div class="col"><div class="lbl">Date</div><div class="val">'+fmtDate(g('invDate'))+'</div></div>'+
+    '<div class="col"><div class="lbl">Reverse Charge</div><div class="val">'+esc(g('revCharge'))+'</div></div>'+
+    '<div class="col"><div class="lbl">Transport</div><div class="val">'+esc(g('transport'))+'</div></div>'+
+    (ind?'<div class="col"><div class="lbl">GSTIN (Provider)</div><div class="val">'+esc(g('pGstin'))+'</div></div>':'')+
+  '</div>'+
+  // Billing
+  '<div class="billing">'+
+    '<div>'+
+      '<h4>From (Provider)</h4>'+
+      '<p><strong>'+esc(g('pName'))+'</strong><br>'+
+      esc(g('pAddr')).replace(/\n/g,'<br>')+'<br>'+
+      esc(g('pCountry'))+'<br>'+
+      esc(g('pMobile'))+' · '+esc(g('pWeb'))+'<br>'+
+      esc(g('pEmail'))+
+      (ind?'<br>GSTIN: '+esc(g('pGstin')):'')+'</p>'+
+    '</div>'+
+    '<div>'+
+      '<h4>Customer Details</h4>'+
+      '<p><strong>'+esc(g('cName'))+'</strong><br>'+
+      esc(g('cAddr')).replace(/\n/g,'<br>')+'<br>'+
+      esc(g('cCountry'))+
+      (ind&&g('cGstin')?'<br>GSTIN: '+esc(g('cGstin')):'')+
+      '</p>'+
+    '</div>'+
+  '</div>'+
+  // Line items
+  '<table class="lines"><thead><tr>'+
+  '<th class="c">Sr. No.</th><th>Service Name</th>'+
+  '<th class="c">Duration / Qty</th><th class="r">Rate</th><th class="r">Total</th>'+
+  '</tr></thead><tbody>'+rows+'</tbody></table>'+
+  // Totals
+  '<div class="tot-wrap"><div class="tot-box">'+
+  (ind?taxHtml:'')+
+  '<div class="tot-row tot-grand"><span>Total Amount'+(ind?'':' ('+g('curr')+')')+' :</span><span>'+money(c.grand)+'</span></div>'+
+  '</div></div>'+
+  // Footer
+  '<div class="inv-footer">'+
+    '<div class="inv-decl"><strong>Declaration:</strong> The particulars given above are true and correct.</div>'+
+    '<div class="inv-sig"><img src="'+SIG_B64+'" style="height:38px;display:block;margin-bottom:2px;mix-blend-mode:multiply"><span style="font-size:9px;color:#888">Authorise Signature</span></div>'+
+  '</div>'+
+  // Bank
+  '<div class="inv-bank">'+
+    '<div class="bank-title">Bank Details</div>'+
+    '<div class="grid">'+
+      '<div>Name: <b>'+esc(g('bName'))+'</b></div><div>SWIFT: <b>'+esc(g('bSwift'))+'</b></div>'+
+      '<div>Account: <b>'+esc(g('bAcc'))+'</b></div><div>Bank: <b>'+esc(g('bBank'))+'</b></div>'+
+      '<div>IFSC: <b>'+esc(g('bIfsc'))+'</b></div><div>Branch: <b>'+esc(g('bBranch'))+'</b></div>'+
+    '</div>'+
+    '<div class="pay">Payment within 15 days via money transfer only.</div>'+
+  '</div>';
+}
+
+function fields(p){var o={};document.querySelectorAll('[id^="'+p+'"]').forEach(function(e){o[e.id]=e.value});return o}
+
+function saveInvoice(){
+  var y=yy(g('invDate'));
+  var ym=g('invDate').slice(0,7).replace('-','');
+  var seq=load(SEQ,{IND:{},INT:{}});
+  seq[MODE][y]=(seq[MODE][y]||0)+1;
+  save(SEQ,seq);
+  var c=calc();
+  var rec={id:Date.now(),mode:MODE,invNo:g('invNo'),date:g('invDate'),month:ym,
+    customer:g('cName'),currency:g('curr'),sub:c.sub,tax:c.tax,grand:c.grand,
+    snapshot:{p:fields('p'),c:fields('c'),b:fields('b'),invDate:g('invDate'),
+      revCharge:g('revCharge'),transport:g('transport'),curr:g('curr'),
+      t1lbl:g('t1lbl'),t2lbl:g('t2lbl'),t1rate:g('t1rate'),t2rate:g('t2rate'),
+      invNo:g('invNo'),pCin:g('pCin'),items:JSON.parse(JSON.stringify(items)),mode:MODE}};
+  var all=load(LS,[]);all.unshift(rec);save(LS,all);
+  nextNumber();render();populateMonthFilter();
+  alert('Saved: '+rec.invNo);
+}
+
+function loadInvoice(id){
+  var r=load(LS,[]).find(function(x){return x.id===id});if(!r)return;
+  var s=r.snapshot;
+  var merged=Object.assign({},s.p,s.c,s.b);
+  Object.keys(merged).forEach(function(k){var e=document.getElementById(k);if(e)e.value=merged[k]});
+  document.getElementById('invDate').value=s.invDate;
+  document.getElementById('revCharge').value=s.revCharge;
+  document.getElementById('transport').value=s.transport;
+  document.getElementById('curr').value=s.curr;
+  document.getElementById('t1lbl').value=s.t1lbl;document.getElementById('t2lbl').value=s.t2lbl;
+  document.getElementById('t1rate').value=s.t1rate;document.getElementById('t2rate').value=s.t2rate;
+  document.getElementById('pCin').value=s.pCin;
+  document.getElementById('invNo').value=s.invNo;
+  items=JSON.parse(JSON.stringify(s.items));MODE=s.mode;
+  document.getElementById('mIND').classList.toggle('on',MODE==='IND');
+  document.getElementById('mINT').classList.toggle('on',MODE==='INT');
+  document.querySelectorAll('.ind-only').forEach(function(e){e.style.display=MODE==='IND'?'':'none'});
+  renderItems();render();
+  document.querySelector('.nav button[data-tab="invoice"]').click();
+}
+function templateInvoice(id){
+  var r=load(LS,[]).find(function(x){return x.id===id});if(!r)return;
+  var s=r.snapshot;
+  // 1. copy all the repeating details (provider, customer, bank, tax setup, mode)
+  var merged=Object.assign({},s.p,s.c,s.b);
+  Object.keys(merged).forEach(function(k){var e=document.getElementById(k);if(e)e.value=merged[k]});
+  document.getElementById('revCharge').value=s.revCharge;
+  document.getElementById('transport').value=s.transport;
+  document.getElementById('curr').value=s.curr;
+  document.getElementById('t1lbl').value=s.t1lbl;document.getElementById('t2lbl').value=s.t2lbl;
+  document.getElementById('t1rate').value=s.t1rate;document.getElementById('t2rate').value=s.t2rate;
+  document.getElementById('pCin').value=s.pCin;
+  MODE=s.mode;
+  document.getElementById('mIND').classList.toggle('on',MODE==='IND');
+  document.getElementById('mINT').classList.toggle('on',MODE==='INT');
+  document.querySelectorAll('.ind-only').forEach(function(e){e.style.display=MODE==='IND'?'':'none'});
+  // 2. carry over the service description(s) but clear the amounts so you re-enter them
+  items=s.items.map(function(it){return{desc:it.desc,qty:it.qty,rate:0}});
+  // 3. reset the things that always change: date -> today, number -> fresh
+  document.getElementById('invDate').value=new Date().toISOString().slice(0,10);
+  nextNumber();
+  renderItems();render();
+  document.querySelector('.nav button[data-tab="invoice"]').click();
+  alert('Template loaded from '+r.invNo+'.\n\nReused: provider, customer, bank, tax & currency setup.\nReset for you: date (today), invoice number (new), and amounts (set to 0).\n\nJust update the amount(s) and save.');
+}
+function delInvoice(id){
+  if(!confirm('Remove this invoice from history? (This does not roll back its number.)'))return;
+  save(LS,load(LS,[]).filter(function(x){return x.id!==id}));populateMonthFilter();renderHistory();
+}
+function populateMonthFilter(){
+  var all=load(LS,[]);
+  var months=Array.from(new Set(all.map(function(r){return r.month}))).sort().reverse();
+  var sel=document.getElementById('fMonth');var cur=sel.value;
+  sel.innerHTML='<option value="">All months</option>'+months.map(function(m){
+    var y=m.slice(0,4),mo=new Date(y,Number(m.slice(4))-1).toLocaleString('en',{month:'long'});
+    return '<option value="'+m+'">'+mo+' '+y+'</option>'}).join('');
+  sel.value=cur;
+}
+function renderHistory(){
+  var all=load(LS,[]);
+  document.getElementById('stCount').textContent=all.length;
+  document.getElementById('stInd').textContent=all.filter(function(r){return r.mode==='IND'}).length;
+  document.getElementById('stInt').textContent=all.filter(function(r){return r.mode==='INT'}).length;
+  var ft=document.getElementById('fType').value,fm=document.getElementById('fMonth').value;
+  var rows=all.filter(function(r){return(!ft||r.mode===ft)&&(!fm||r.month===fm)});
+  var body=document.getElementById('histBody');
+  if(!rows.length){body.innerHTML='<div class="empty">No invoices yet. Create one and click \u201CSave to History\u201D.</div>';return}
+  body.innerHTML='<table class="htbl"><thead><tr><th>Invoice No.</th><th>Type</th><th>Date</th>'+
+    '<th>Customer</th><th>Amount</th><th>Actions</th></tr></thead><tbody>'+
+    rows.map(function(r){return '<tr><td><b>'+esc(r.invNo)+'</b></td>'+
+      '<td><span class="badge '+(r.mode==='IND'?'ind':'intl')+'">'+(r.mode==='IND'?'India GST':'Export')+'</span></td>'+
+      '<td>'+fmtDate(r.date)+'</td><td>'+esc(r.customer)+'</td>'+
+      '<td><b>'+(CUR[r.currency]||'')+Number(r.grand).toLocaleString('en-IN')+'</b></td>'+
+      '<td><button class="mini" onclick="loadInvoice('+r.id+')">Open</button>'+
+      '<button class="mini tmpl" onclick="templateInvoice('+r.id+')">Use as Template</button>'+
+      '<button class="mini del" onclick="delInvoice('+r.id+')">Delete</button></td></tr>'}).join('')+
+    '</tbody></table>';
+}
+
+function exportExcel(){
+  var all=load(LS,[]);
+  if(!all.length){alert('No invoices to export.');return}
+  var data=all.map(function(r){return{
+    'Invoice No':r.invNo,'Type':r.mode==='IND'?'India GST':'Export',
+    'Date':fmtDate(r.date),'Month':r.month,'Customer':r.customer,
+    'Currency':r.currency,'Subtotal':r.sub,'Tax':r.tax,'Total':r.grand}});
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[{wch:14},{wch:12},{wch:16},{wch:9},{wch:38},{wch:9},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'All Invoices');
+  var ind=data.filter(function(d){return d.Type==='India GST'});
+  var intl=data.filter(function(d){return d.Type==='Export'});
+  if(ind.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ind),'Indian');
+  if(intl.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(intl),'International');
+  XLSX.writeFile(wb,'Windesign_Invoices_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function backupData(){
+  var payload={
+    _type:'windesign_hr_backup',
+    _version:1,
+    _exportedAt:new Date().toISOString(),
+    invoices:load(LS,[]),
+    seq:load(SEQ,{IND:{},INT:{}})
+  };
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Windesign_Backup_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  alert('Backup downloaded.\n'+(payload.invoices.length)+' invoice(s) saved.\n\nKeep this file safe (Google Drive / a backup folder). You can restore it any time, even after clearing browser data.');
+}
+
+function restoreData(input){
+  var file=input.files&&input.files[0];
+  input.value='';
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var data;
+    try{data=JSON.parse(e.target.result)}
+    catch(err){alert('That file is not a valid backup (could not read JSON).');return}
+    if(!data||data._type!=='windesign_hr_backup'||!Array.isArray(data.invoices)){
+      alert('That file is not a Windesign backup file. Please choose a file created by the "Backup All Data" button.');return;
+    }
+    var existing=load(LS,[]);
+    var msg='This backup contains '+data.invoices.length+' invoice(s) (exported '+
+      (data._exportedAt?new Date(data._exportedAt).toLocaleString():'unknown date')+').\n\n';
+    var mode;
+    if(existing.length){
+      mode=confirm(msg+'You currently have '+existing.length+' invoice(s) in this browser.\n\n'+
+        'OK = MERGE backup into current data (keeps both, skips duplicates)\n'+
+        'Cancel = REPLACE everything with the backup')?'merge':'replace';
+    }else{
+      if(!confirm(msg+'Restore these records now?'))return;
+      mode='replace';
+    }
+    if(mode==='replace'){
+      save(LS,data.invoices);
+      save(SEQ,data.seq||{IND:{},INT:{}});
+    }else{
+      var ids={};existing.forEach(function(r){ids[r.id]=1});
+      var nums={};existing.forEach(function(r){nums[r.invNo]=1});
+      var added=0;
+      data.invoices.forEach(function(r){
+        if(!ids[r.id]&&!nums[r.invNo]){existing.push(r);added++}
+      });
+      existing.sort(function(a,b){return b.id-a.id});
+      save(LS,existing);
+      // merge sequence counters: keep the higher count per type/month
+      var seq=load(SEQ,{IND:{},INT:{}});
+      var bseq=data.seq||{IND:{},INT:{}};
+      ['IND','INT'].forEach(function(t){
+        seq[t]=seq[t]||{};bseq[t]=bseq[t]||{};
+        Object.keys(bseq[t]).forEach(function(ym){
+          seq[t][ym]=Math.max(seq[t][ym]||0,bseq[t][ym]||0);
+        });
+      });
+      save(SEQ,seq);
+      alert(added+' new invoice(s) added from backup ('+(data.invoices.length-added)+' were already present and skipped).');
+    }
+    populateMonthFilter();renderHistory();nextNumber();
+    if(mode==='replace')alert('Restore complete. '+data.invoices.length+' invoice(s) loaded.');
+  };
+  reader.readAsText(file);
+}
+
+var SIG_B64="data:image/png;base64,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eqxFK05vP+jcz2R/hK2hq9OMOutU0z4rxVRubRU0zSJKeN34nvz1EjvDHiGk56uIGikRc8l5vbqlYjQiIsKIiICIiAiIg8UlptUlybcpLZRPrmY5al0DTK3HQYdjP9V7URAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQF5rnb6C6UclFcqKmraWQYfDURCRjvzaRgr0ogpvVfDftveS59DS1llkIIxRzZjJz5sfn9BhQs8M+obJIH6O3GqqHlyWgiSE58usb8f0WmEXWM+SONpqGbmbbcRNvOKPcuKqDeoMtdI4n5SROX3i0bxJzSNfNrqiiwPw+kNAz/th6rRSK+9b4j9HSzpPtzxBzjspdxouST1XGO4Sxlo9oLYgf0KT7B6+vzHM1RuxcXxSY7SGJ80zHAeWHPaP6LRaKe9bwaZ5tHCjpCKodJd9Q3ivZ+6yIMh/6jhxPywrN0xtDttpySKa2aQtoni6smqGGeQHp1BkJweniFOUWZyXnvJqBoDQGtAAHQAeSIiwoiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33QWyiqbva6+86367vune11951v13fdBbKKpu9rr7zrfru+6d7XX3nW/Xd90Fsoqm72uvvOt+u77p3tdfedb9d33Qf//Z";
+
+function exportPDF(){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF('p','pt','a4');
+  var ind=MODE==='IND';var c=calc();
+  // jsPDF built-in fonts don't support ₹ — use 'Rs.' for INR in PDF only
+  var currLabel=g('curr')==='INR'?'Rs.':CUR[g('curr')]||g('curr')+' ';
+  function moneyPDF(n){return currLabel+Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}
+
+  var L=44,R=551,PW=507,y=0;
+  var cGREEN=[31,78,61],cGOLD=[176,137,72],cMUTED=[110,100,96],cINK=[28,28,28],cLINE=[210,205,198];
+
+  // ── HEADER: white bg, company left, INVOICE right ──────────────────────────
+  y=40;
+  doc.setFont('times','bold');doc.setFontSize(20);doc.setTextColor(cINK[0],cINK[1],cINK[2]);
+  doc.text(g('pName'),L,y);
+  doc.setFont('times','bold');doc.setFontSize(32);doc.setTextColor(cGREEN[0],cGREEN[1],cGREEN[2]);
+  doc.text(ind?'INVOICE':'EXPORT INVOICE',R,y,{align:'right'});
+  // subtitle under company name
+  y+=14;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+  doc.text('INVOICE FOR DESIGN SERVICES',L,y);
+  // subtitle under INVOICE (GST/Export)
+  doc.setFont('times','italic');doc.setFontSize(9);
+  doc.text(ind?'GST Invoice  \u00B7  CIN: '+g('pCin'):'Export Invoice  \u00B7  Zero-rated export of services',R,y,{align:'right'});
+
+  // ── GOLD DIVIDER ───────────────────────────────────────────────────────────
+  y+=12;
+  doc.setDrawColor(cGOLD[0],cGOLD[1],cGOLD[2]);doc.setLineWidth(2);doc.line(L,y,R,y);
+  y+=18;
+
+  // ── META STRIP ────────────────────────────────────────────────────────────
+  var metaCols=[['INVOICE NO.',g('invNo')],['DATE',fmtDate(g('invDate'))],
+    ['REVERSE\nCHARGE',g('revCharge')],['TRANSPORT',g('transport')]];
+  if(ind)metaCols.push(['GSTIN\n(PROVIDER)',g('pGstin')]);
+  var colW=PW/metaCols.length;
+  metaCols.forEach(function(col,i){
+    var cx=L+i*colW;
+    // label (may have \n)
+    doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(cGOLD[0],cGOLD[1],cGOLD[2]);
+    var labelLines=col[0].split('\n');
+    labelLines.forEach(function(ll,li){doc.text(ll,cx,y+li*9)});
+    // value
+    doc.setFont('times','bold');doc.setFontSize(11);doc.setTextColor(cINK[0],cINK[1],cINK[2]);
+    doc.text(String(col[1]||''),cx,y+labelLines.length*9+2);
+  });
+  y+=38;
+  doc.setDrawColor(cLINE[0],cLINE[1],cLINE[2]);doc.setLineWidth(.5);doc.line(L,y,R,y);
+  y+=16;
+
+  // ── BILLING: FROM | CUSTOMER ──────────────────────────────────────────────
+  function addrBlock(label,lines,x,startY,maxW){
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(cGOLD[0],cGOLD[1],cGOLD[2]);
+    doc.text(label,x,startY);
+    var yy=startY+14;
+    lines.forEach(function(ln){
+      if(ln===undefined||ln===null||ln==='')return;
+      doc.setFont('times','bold');doc.setFontSize(9);doc.setTextColor(cINK[0],cINK[1],cINK[2]);
+      // first line bold (name), rest normal
+      if(yy===startY+14){doc.setFont('times','bold')}else{doc.setFont('times','normal')}
+      var wrapped=doc.splitTextToSize(String(ln),maxW);
+      wrapped.forEach(function(l){doc.text(l,x,yy);yy+=12});
+    });
+    return yy;
+  }
+  var half=(PW-20)/2;
+  var fromLines=[g('pName'),g('pAddr'),g('pCountry'),g('pMobile')+' \u00B7 '+g('pWeb'),g('pEmail')];
+  if(ind)fromLines.push('GSTIN: '+g('pGstin'));
+  var toLines=[g('cName'),g('cAddr'),g('cCountry')];
+  if(ind&&g('cGstin'))toLines.push('GSTIN: '+g('cGstin'));
+  var y1=addrBlock('FROM (PROVIDER)',fromLines,L,y,half);
+  var y2=addrBlock('CUSTOMER DETAILS',toLines,L+half+20,y,half);
+  y=Math.max(y1,y2)+18;
+
+  // ── LINE ITEMS TABLE ──────────────────────────────────────────────────────
+  // Header
+  doc.setFillColor(cGREEN[0],cGREEN[1],cGREEN[2]);doc.rect(L,y,PW,24,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(255,255,255);
+  doc.text('SR. NO.',L+8,y+15);
+  doc.text('SERVICE NAME',L+70,y+15);
+  doc.text('DURATION / QTY',L+295,y+15,{align:'center'});
+  doc.text('RATE',L+390,y+15,{align:'right'});
+  doc.text('TOTAL',PW+L,y+15,{align:'right'});
+  y+=24;
+
+  // Rows
+  items.forEach(function(it,i){
+    var descLines=doc.splitTextToSize(it.desc||'',210);
+    var rowH=Math.max(26,descLines.length*13+10);
+    if(i%2===1){doc.setFillColor(248,246,242);doc.rect(L,y,PW,rowH,'F')}
+    doc.setFont('times','normal');doc.setFontSize(10);doc.setTextColor(cINK[0],cINK[1],cINK[2]);
+    doc.text(String(i+1),L+8,y+16);
+    doc.text(descLines,L+70,y+16);
+    doc.text(String(it.qty),L+295,y+16,{align:'center'});
+    doc.text(moneyPDF(it.rate),L+390,y+16,{align:'right'});
+    doc.text(moneyPDF(it.qty*it.rate),PW+L,y+16,{align:'right'});
+    doc.setDrawColor(cLINE[0],cLINE[1],cLINE[2]);doc.setLineWidth(.4);doc.line(L,y+rowH,R,y+rowH);
+    y+=rowH;
+  });
+  y+=10;
+
+  // ── TOTALS ────────────────────────────────────────────────────────────────
+  var txL=L+PW*0.5;
+  if(ind){
+    c.taxRows.forEach(function(t){
+      doc.setFont('times','normal');doc.setFontSize(10);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+      doc.text(t[0]+' :',txL,y);
+      doc.text(moneyPDF(t[1]),R,y,{align:'right'});
+      y+=16;
+    });
+  }
+  doc.setDrawColor(cGREEN[0],cGREEN[1],cGREEN[2]);doc.setLineWidth(1);doc.line(txL,y,R,y);y+=10;
+  doc.setFont('times','bold');doc.setFontSize(15);doc.setTextColor(cGREEN[0],cGREEN[1],cGREEN[2]);
+  doc.text('Total Amount'+(ind?'':' ('+g('curr')+')')+' :',txL,y+4);
+  doc.text(moneyPDF(c.grand),R,y+4,{align:'right'});
+  y+=30;
+
+  // ── DECLARATION + SIGNATURE ───────────────────────────────────────────────
+  doc.setDrawColor(cLINE[0],cLINE[1],cLINE[2]);doc.setLineWidth(.5);doc.line(L,y,R,y);y+=16;
+  doc.setFont('times','italic');doc.setFontSize(9);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+  doc.text('Declaration: The particulars given above are true and correct.',L,y);
+  // Signature image (white bg — no blending needed)
+  var sigW=100,sigH=40;
+  doc.addImage(SIG_B64,'PNG',R-sigW,y-14,sigW,sigH);
+  y+=30;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+  doc.text('Authorise Signature',R,y,{align:'right'});
+  y+=20;
+
+  // ── BANK DETAILS ─────────────────────────────────────────────────────────
+  doc.setFillColor(232,240,236);doc.rect(L-4,y,PW+8,4,'F');
+  doc.setFillColor(cGREEN[0],cGREEN[1],cGREEN[2]);doc.rect(L-4,y,PW+8,3,'F');
+  y+=12;
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(cGREEN[0],cGREEN[1],cGREEN[2]);
+  doc.text('BANK DETAILS',L,y);y+=13;
+  doc.setFont('times','normal');doc.setFontSize(9);doc.setTextColor(60,55,52);
+  var bk=[['Name: '+g('bName'),'SWIFT: '+g('bSwift')],
+    ['Account: '+g('bAcc'),'Bank: '+g('bBank')],
+    ['IFSC: '+g('bIfsc'),'Branch: '+g('bBranch')]];
+  bk.forEach(function(r){
+    // bold key, normal value
+    doc.text(r[0],L,y);doc.text(r[1],L+PW/2+10,y);y+=13;
+  });
+  y+=4;doc.setFont('times','italic');doc.setFontSize(8.5);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+  doc.text('Payment within 15 days via money transfer only.',L,y);
+
+  doc.save(g('invNo')+'.pdf');
+}
+
+async function exportWord(){
+  var d=docx;var Document=d.Document,Packer=d.Packer,Paragraph=d.Paragraph,TextRun=d.TextRun,
+    Table=d.Table,TableRow=d.TableRow,TableCell=d.TableCell,WidthType=d.WidthType,AlignmentType=d.AlignmentType;
+  var ind=MODE==='IND';var c=calc();
+  function P(t,o){o=o||{};return new Paragraph({alignment:o.r?AlignmentType.RIGHT:(o.c?AlignmentType.CENTER:AlignmentType.LEFT),
+    spacing:{after:o.after==null?60:o.after},children:[new TextRun({text:t,bold:o.b,size:o.s||18,color:o.col||'222222'})]})}
+  function cell(t,o){o=o||{};return new TableCell({width:{size:o.w||20,type:WidthType.PERCENTAGE},
+    shading:o.h?{fill:'111111'}:undefined,children:[new Paragraph({alignment:o.r?AlignmentType.RIGHT:(o.c?AlignmentType.CENTER:AlignmentType.LEFT),
+    children:[new TextRun({text:String(t),bold:o.h||o.b,color:o.h?'FFFFFF':'222222',size:o.h?15:17})]})]})}
+  var hdr=new TableRow({children:[cell('SR.',{h:1,w:8,c:1}),cell('SERVICE NAME',{h:1,w:46}),
+    cell('QTY',{h:1,w:12,c:1}),cell('RATE',{h:1,w:17,r:1}),cell('TOTAL',{h:1,w:17,r:1})]});
+  var brows=items.map(function(it,i){return new TableRow({children:[cell(i+1,{w:8,c:1}),
+    cell(it.desc,{w:46}),cell(it.qty,{w:12,c:1}),cell(money(it.rate),{w:17,r:1}),
+    cell(money(it.qty*it.rate),{w:17,r:1})]})});
+  var kids=[P('Invoice for design services',{b:1,s:30}),
+    P(ind?'GST Invoice   CIN: '+g('pCin'):'Export Invoice',{s:16,col:'777777',after:200}),
+    P('PROVIDER',{b:1,s:15,col:'2828B4'})];
+  ['Name: '+g('pName'),'Address: '+g('pAddr'),'Country: '+g('pCountry')]
+    .concat(ind?['GSTIN: '+g('pGstin')]:[])
+    .concat(['Mobile: '+g('pMobile'),'Web: '+g('pWeb'),'Email: '+g('pEmail')])
+    .forEach(function(t){kids.push(P(t))});
+  kids.push(P('',{after:120}),P('INVOICE DETAILS',{b:1,s:15,col:'2828B4'}));
+  ['Invoice: '+g('invNo'),'Date: '+fmtDate(g('invDate')),'Reverse charge: '+g('revCharge'),
+    'Mode Of Transport: '+g('transport')].forEach(function(t){kids.push(P(t))});
+  kids.push(P('',{after:120}),P('CUSTOMER DETAILS',{b:1,s:15,col:'2828B4'}));
+  ['Name: '+g('cName'),'Address: '+g('cAddr'),'Country: '+g('cCountry')]
+    .concat(ind?['GSTIN: '+g('cGstin')]:[]).forEach(function(t){kids.push(P(t))});
+  kids.push(P('',{after:160}),
+    new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[hdr].concat(brows)}),
+    P('',{after:140}));
+  if(ind)c.taxRows.forEach(function(t){kids.push(P(t[0]+' : '+money(t[1]),{r:1}))});
+  kids.push(P('Total Amount'+(ind?'':' ('+g('curr')+')')+' : '+money(c.grand),{r:1,b:1,s:24,after:240}),
+    P('Declaration: The particular given above are true and correct',{s:16,col:'555555'}),
+    P('Authorise signature',{r:1,s:16,col:'555555',after:200}),
+    P('BANK DETAILS',{b:1,s:15,col:'136B41'}));
+  ['Name: '+g('bName'),'Account number: '+g('bAcc'),'IFSC: '+g('bIfsc'),
+    'SWIFT code: '+g('bSwift'),'Bank name: '+g('bBank'),'Branch: '+g('bBranch')]
+    .forEach(function(t){kids.push(P(t))});
+  kids.push(P('Payment within 15 days via money transfer only to the given account',{s:15,col:'888888'}));
+  var blob=await Packer.toBlob(new Document({sections:[{children:kids}]}));
+  saveAs(blob,g('invNo')+'.docx');
+}
+
+// ═══════════════════════════════════════════════
+// SHARED LETTER HELPERS
+// ═══════════════════════════════════════════════
+var INTERN_MODE='joining';
+
+function fmtRupee(n){return '\u20B9'+Number(n).toLocaleString('en-IN');}
+function fmtRupeePDF(n){return 'Rs.'+Number(n).toLocaleString('en-IN');}
+function gv(id){var e=document.getElementById(id);return e?e.value:'';}
+
+function letterHead(subtitle){
+  return '<div style="padding:28px 36px 0">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid #1f4e3d">'+
+      '<div>'+
+        '<div style="font-family:Playfair Display,serif;font-size:20px;font-weight:700;color:#1f4e3d">Windesign Labs (OPC) Pvt. Ltd.</div>'+
+        '<div style="font-size:10px;color:#6b6460;margin-top:3px;font-style:italic">FLAT NO 808 RACHANA, ASHWINI APT JAGDISH NAGAR, Katolroad, Nagpur - 440013, Maharashtra</div>'+
+        '<div style="font-size:10px;color:#6b6460">CIN: U62010MH2024OPC427928 &nbsp;|&nbsp; GSTIN: 27AADCW8668C1ZZ &nbsp;|&nbsp; windesign.io</div>'+
+      '</div>'+
+      '<div style="text-align:right;font-family:Playfair Display,serif;font-size:13px;font-weight:700;color:#b08948;letter-spacing:1px;text-transform:uppercase;margin-top:4px">'+subtitle+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function letterFooter(dateStr){
+  return '<div style="padding:24px 36px 28px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:36px">'+
+      '<div style="font-size:10px;color:#6b6460">'+
+        '<div style="font-weight:700;color:#1f4e3d;font-size:11px">Windesign Labs (OPC) Pvt. Ltd.</div>'+
+        '<div>Date: '+(dateStr?fmtDate(dateStr):'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:center">'+
+        '<img src="'+SIG_B64+'" style="height:44px;display:block;margin-bottom:2px">'+
+        '<div style="font-size:9px;color:#888;border-top:1px solid #ccc;padding-top:4px;width:140px">Authorised Signatory</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="margin-top:18px;padding-top:12px;border-top:1px solid #e4e0d8;background:#e8f0ec;padding:10px 16px;font-size:9px;color:#1f4e3d">'+
+      'Windesign Labs (OPC) Pvt. Ltd. &nbsp;·&nbsp; +919730627087 &nbsp;·&nbsp; jitu@windesign.io &nbsp;·&nbsp; windesign.io'+
+    '</div>'+
+  '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// OFFER LETTER
+// ═══════════════════════════════════════════════
+window.addEventListener('load',function(){
+  var today=new Date().toISOString().slice(0,10);
+  var joining=new Date();joining.setDate(joining.getDate()+30);
+  document.getElementById('ol_date').value=today;
+  document.getElementById('ol_joining').value=joining.toISOString().slice(0,10);
+  document.getElementById('il_date').value=today;
+  var s=new Date();s.setDate(s.getDate()+7);
+  var en=new Date();en.setDate(en.getDate()+97);
+  document.getElementById('il_start').value=s.toISOString().slice(0,10);
+  document.getElementById('il_end').value=en.toISOString().slice(0,10);
+  document.getElementById('il_issue_date').value=today;
+  document.getElementById('ap_date').value=today;
+  document.getElementById('ap_effective').value=today;
+  renderOffer();renderIntern();renderAppraisal();
+},{once:true});
+
+function calcOfferCTC(){
+  var b=parseFloat(gv('ol_basic'))||0,h=parseFloat(gv('ol_hra'))||0,
+      s=parseFloat(gv('ol_special'))||0,o=parseFloat(gv('ol_other'))||0;
+  var total=b+h+s+o;
+  document.getElementById('ol_ctc').textContent=fmtRupee(total)+' per annum';
+  return {b:b,h:h,s:s,o:o,total:total};
+}
+
+function renderOffer(){
+  var ctc=calcOfferCTC();
+  var html=letterHead('Offer Letter')+
+  '<div style="padding:20px 36px;font-size:11px;font-family:Georgia,serif;line-height:1.7;color:#222">'+
+    '<div style="margin-bottom:14px"><b>Date:</b> '+fmtDate(gv('ol_date'))+'</div>'+
+    '<div style="margin-bottom:14px">'+
+      '<b>To,</b><br>'+
+      '<b style="font-size:13px">'+esc(gv('ol_name'))+'</b>'+
+    '</div>'+
+    '<div style="margin-bottom:16px"><b>Sub: Offer of Employment — '+esc(gv('ol_role'))+'</b></div>'+
+    '<p style="margin-bottom:10px">Dear <b>'+esc(gv('ol_name').split(' ')[0])+'</b>,</p>'+
+    '<p style="margin-bottom:10px">We are pleased to offer you the position of <b>'+esc(gv('ol_role'))+'</b> in the <b>'+esc(gv('ol_dept'))+'</b> department at Windesign Labs (OPC) Pvt. Ltd. Your appointment will be effective from <b>'+fmtDate(gv('ol_joining'))+'</b>.</p>'+
+    '<p style="margin-bottom:16px">You will be based at <b>'+esc(gv('ol_location'))+'</b> and will report directly to <b>'+esc(gv('ol_manager'))+'</b>.</p>'+
+    // CTC table
+    '<div style="border:1px solid #ddd;margin-bottom:16px">'+
+      '<div style="background:#1f4e3d;color:#fff;padding:8px 12px;font-size:10px;letter-spacing:1px;font-weight:700">COMPENSATION DETAILS (ANNUAL)</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:10.5px">'+
+        ctcRow('Basic Salary',ctc.b)+
+        ctcRow('House Rent Allowance (HRA)',ctc.h)+
+        (ctc.s?ctcRow('Special Allowance',ctc.s):'')+
+        (ctc.o?ctcRow('Other Allowance',ctc.o):'')+
+        '<tr style="background:#e8f0ec"><td style="padding:8px 12px;font-weight:700">Total Cost to Company (CTC)</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#1f4e3d">'+fmtRupee(ctc.total)+' per annum</td></tr>'+
+        '<tr><td style="padding:6px 12px;color:#555;font-size:9.5px">Monthly In-hand (approx.)</td><td style="padding:6px 12px;text-align:right;color:#555;font-size:9.5px">'+fmtRupee(Math.round(ctc.total/12))+' per month</td></tr>'+
+      '</table>'+
+    '</div>'+
+    '<p style="margin-bottom:8px"><b>Terms &amp; Conditions:</b></p>'+
+    '<ul style="padding-left:18px;margin-bottom:14px">'+
+      '<li>Probation Period: <b>'+gv('ol_probation')+'</b> from the date of joining.</li>'+
+      '<li>Notice Period: <b>'+gv('ol_notice')+'</b> after completion of probation.</li>'+
+      '<li>'+esc(gv('ol_notes'))+'</li>'+
+    '</ul>'+
+    '<p style="margin-bottom:10px">Please confirm your acceptance of this offer by signing and returning a copy of this letter. We look forward to welcoming you to the Windesign team.</p>'+
+    '<p>Yours sincerely,</p>'+
+  '</div>'+
+  letterFooter(gv('ol_date'))+
+  '<div style="padding:0 36px 20px;font-size:9px;color:#888;border-top:1px solid #eee;margin:0 36px;padding-top:10px">'+
+    '<b>Acceptance:</b> I, '+esc(gv('ol_name'))+', accept the above offer of employment.<br>'+
+    'Signature: ______________________________ &nbsp;&nbsp; Date: ______________'+
+  '</div>';
+  document.getElementById('offerPaper').innerHTML=html;
+}
+function ctcRow(label,val){
+  if(!val)return'';
+  return'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 12px">'+label+'</td><td style="padding:7px 12px;text-align:right">'+fmtRupee(val)+'</td></tr>';
+}
+
+// ═══════════════════════════════════════════════
+// INTERNSHIP LETTER
+// ═══════════════════════════════════════════════
+function setInternMode(m){
+  INTERN_MODE=m;
+  document.getElementById('il_joining_btn').classList.toggle('on',m==='joining');
+  document.getElementById('il_completion_btn').classList.toggle('on',m==='completion');
+  document.getElementById('il_completion_fields').style.display=m==='completion'?'':'none';
+  renderIntern();
+}
+
+function renderIntern(){
+  var html='';
+  var dur=internDuration();
+  if(INTERN_MODE==='joining'){
+    html=letterHead('Internship Offer Letter')+
+    '<div style="padding:20px 36px;font-size:11px;font-family:Georgia,serif;line-height:1.7;color:#222">'+
+      '<div style="margin-bottom:14px"><b>Date:</b> '+fmtDate(gv('il_date'))+'</div>'+
+      '<div style="margin-bottom:14px"><b>To,</b><br><b style="font-size:13px">'+esc(gv('il_name'))+'</b><br>'+esc(gv('il_college'))+'</div>'+
+      '<div style="margin-bottom:16px"><b>Sub: Internship Offer — '+esc(gv('il_role'))+'</b></div>'+
+      '<p style="margin-bottom:10px">Dear <b>'+esc(gv('il_name').split(' ')[0])+'</b>,</p>'+
+      '<p style="margin-bottom:10px">We are pleased to offer you an internship opportunity at <b>Windesign Labs (OPC) Pvt. Ltd.</b> as a <b>'+esc(gv('il_role'))+'</b> in the <b>'+esc(gv('il_dept'))+'</b> department.</p>'+
+      '<div style="border:1px solid #ddd;margin-bottom:16px">'+
+        '<div style="background:#1f4e3d;color:#fff;padding:8px 12px;font-size:10px;letter-spacing:1px;font-weight:700">INTERNSHIP DETAILS</div>'+
+        '<table style="width:100%;border-collapse:collapse;font-size:10.5px">'+
+          detailRow('Internship Role',gv('il_role'))+
+          detailRow('Department',gv('il_dept'))+
+          detailRow('Start Date',fmtDate(gv('il_start')))+
+          detailRow('End Date',fmtDate(gv('il_end')))+
+          detailRow('Duration',dur)+
+          detailRow('Monthly Stipend',fmtRupee(gv('il_stipend')))+
+          detailRow('Supervisor / Mentor',gv('il_mentor'))+
+        '</table>'+
+      '</div>'+
+      '<p style="margin-bottom:10px">'+esc(gv('il_notes'))+'</p>'+
+      '<p style="margin-bottom:10px">We expect you to maintain the highest standards of professionalism and confidentiality during your internship. We look forward to having you on board.</p>'+
+      '<p>Yours sincerely,</p>'+
+    '</div>'+
+    letterFooter(gv('il_date'))+
+    '<div style="padding:0 36px 20px;font-size:9px;color:#888;margin:0 36px;padding-top:10px;border-top:1px solid #eee">'+
+      '<b>Acceptance:</b> I, '+esc(gv('il_name'))+', accept the above internship offer.<br>'+
+      'Signature: ______________________________ &nbsp;&nbsp; Date: ______________'+
+    '</div>';
+  } else {
+    html=letterHead('Internship Completion Certificate')+
+    '<div style="padding:20px 36px;font-size:11px;font-family:Georgia,serif;line-height:1.7;color:#222">'+
+      '<div style="margin-bottom:14px"><b>Date:</b> '+fmtDate(gv('il_issue_date'))+'</div>'+
+      '<div style="text-align:center;margin:20px 0">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f4e3d;letter-spacing:1px">INTERNSHIP COMPLETION CERTIFICATE</div>'+
+        '<div style="font-size:10px;color:#888;margin-top:4px">This is to certify that</div>'+
+      '</div>'+
+      '<div style="text-align:center;margin:16px 0">'+
+        '<div style="font-size:20px;font-weight:700;font-family:Playfair Display,serif;color:#1f4e3d;border-bottom:2px solid #b08948;display:inline-block;padding-bottom:4px">'+esc(gv('il_name'))+'</div>'+
+        '<div style="font-size:10px;color:#555;margin-top:6px">'+esc(gv('il_college'))+'</div>'+
+      '</div>'+
+      '<p style="margin-bottom:10px;text-align:center">has successfully completed an internship as <b>'+esc(gv('il_role'))+'</b> in the <b>'+esc(gv('il_dept'))+'</b> department at <b>Windesign Labs (OPC) Pvt. Ltd.</b></p>'+
+      '<div style="border:1px solid #ddd;margin:16px 0">'+
+        '<div style="background:#1f4e3d;color:#fff;padding:8px 12px;font-size:10px;letter-spacing:1px;font-weight:700">INTERNSHIP DETAILS</div>'+
+        '<table style="width:100%;border-collapse:collapse;font-size:10.5px">'+
+          detailRow('Duration',fmtDate(gv('il_start'))+' to '+fmtDate(gv('il_end'))+' ('+dur+')')+
+          detailRow('Supervisor / Mentor',gv('il_mentor'))+
+        '</table>'+
+      '</div>'+
+      '<p style="margin-bottom:10px">During the internship, <b>'+esc(gv('il_name').split(' ')[0])+'</b> '+esc(gv('il_feedback'))+'</p>'+
+      '<p style="margin-bottom:10px">We wish them all the best for their future endeavours.</p>'+
+      '<p>Yours sincerely,</p>'+
+    '</div>'+
+    letterFooter(gv('il_issue_date'));
+  }
+  document.getElementById('internPaper').innerHTML=html;
+}
+function detailRow(label,val){
+  return'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 12px;color:#555;font-size:10px">'+label+'</td><td style="padding:7px 12px;font-weight:600">'+esc(String(val||''))+'</td></tr>';
+}
+function internDuration(){
+  var s=new Date(gv('il_start')),e=new Date(gv('il_end'));
+  if(isNaN(s)||isNaN(e))return'—';
+  var diff=Math.round((e-s)/(1000*60*60*24));
+  if(diff<0)return'—';
+  var months=Math.floor(diff/30),days=diff%30;
+  var parts=[];
+  if(months)parts.push(months+' month'+(months>1?'s':''));
+  if(days)parts.push(days+' day'+(days>1?'s':''));
+  return parts.join(' ')|| '0 days';
+}
+
+// ═══════════════════════════════════════════════
+// APPRAISAL LETTER
+// ═══════════════════════════════════════════════
+function calcAppraisalCTC(){
+  var b=parseFloat(gv('ap_basic'))||0,h=parseFloat(gv('ap_hra'))||0,
+      s=parseFloat(gv('ap_special'))||0,o=parseFloat(gv('ap_other'))||0;
+  var total=b+h+s+o;
+  var el=document.getElementById('ap_new_ctc');
+  if(el)el.textContent=fmtRupee(total)+'/yr';
+  return{b:b,h:h,s:s,o:o,total:total};
+}
+
+function renderAppraisal(){
+  var ctc=calcAppraisalCTC();
+  var oldCTC=parseFloat(gv('ap_old_ctc'))||0;
+  var hike=oldCTC>0?Math.round((ctc.total-oldCTC)/oldCTC*100):0;
+  var isPromo=gv('ap_new_role')!==gv('ap_old_role');
+  var html=letterHead('Appraisal Letter')+
+  '<div style="padding:20px 36px;font-size:11px;font-family:Georgia,serif;line-height:1.7;color:#222">'+
+    '<div style="margin-bottom:14px"><b>Date:</b> '+fmtDate(gv('ap_date'))+'</div>'+
+    '<div style="margin-bottom:14px">'+
+      '<b>To,</b><br>'+
+      '<b style="font-size:13px">'+esc(gv('ap_name'))+'</b><br>'+
+      'Employee ID: '+esc(gv('ap_id'))+'<br>'+
+      'Department: '+esc(gv('ap_dept'))+
+    '</div>'+
+    '<div style="margin-bottom:16px"><b>Sub: '+(isPromo?'Promotion &amp; ':'')+' Appraisal Letter — Effective '+fmtDate(gv('ap_effective'))+'</b></div>'+
+    '<p style="margin-bottom:10px">Dear <b>'+esc(gv('ap_name').split(' ')[0])+'</b>,</p>'+
+    '<p style="margin-bottom:10px">'+esc(gv('ap_perf'))+'</p>'+
+    '<p style="margin-bottom:14px">It gives us great pleasure to inform you that your annual appraisal has been completed and, in recognition of your performance, the following revision has been approved effective <b>'+fmtDate(gv('ap_effective'))+'</b>:</p>'+
+    (isPromo?'<div style="background:#e8f0ec;border-left:3px solid #1f4e3d;padding:10px 14px;margin-bottom:16px;font-size:11px"><b>Designation Change:</b> '+esc(gv('ap_old_role'))+' → <b>'+esc(gv('ap_new_role'))+'</b></div>':'')+
+    '<div style="border:1px solid #ddd;margin-bottom:16px">'+
+      '<div style="background:#1f4e3d;color:#fff;padding:8px 12px;font-size:10px;letter-spacing:1px;font-weight:700">REVISED COMPENSATION (ANNUAL)</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:10.5px">'+
+        '<tr style="background:#fafafa"><th style="padding:7px 12px;text-align:left;color:#888;font-size:9.5px;font-weight:600">COMPONENT</th><th style="padding:7px 12px;text-align:right;color:#888;font-size:9.5px;font-weight:600">PREVIOUS</th><th style="padding:7px 12px;text-align:right;color:#888;font-size:9.5px;font-weight:600">REVISED</th></tr>'+
+        apRow('Basic Salary',null,ctc.b)+
+        apRow('HRA',null,ctc.h)+
+        (ctc.s?apRow('Special Allowance',null,ctc.s):'')+
+        (ctc.o?apRow('Other Allowance',null,ctc.o):'')+
+        '<tr style="background:#e8f0ec;font-weight:700"><td style="padding:8px 12px">Total CTC</td>'+
+          '<td style="padding:8px 12px;text-align:right;color:#888">'+fmtRupee(oldCTC)+'</td>'+
+          '<td style="padding:8px 12px;text-align:right;color:#1f4e3d">'+fmtRupee(ctc.total)+'</td>'+
+        '</tr>'+
+        (hike>0?'<tr><td style="padding:6px 12px;font-size:9.5px;color:#1f7a4d" colspan="3"><b>Increment: '+hike+'% hike</b> on previous CTC</td></tr>':'')+
+      '</table>'+
+    '</div>'+
+    '<p style="margin-bottom:10px">The revised compensation will be effective from <b>'+fmtDate(gv('ap_effective'))+'</b>. Your updated appointment letter / addendum will follow. Please sign and return a copy of this letter as acknowledgement.</p>'+
+    '<p>Congratulations and keep up the excellent work!</p>'+
+    '<p>Yours sincerely,</p>'+
+  '</div>'+
+  letterFooter(gv('ap_date'))+
+  '<div style="padding:0 36px 20px;font-size:9px;color:#888;margin:0 36px;padding-top:10px;border-top:1px solid #eee">'+
+    '<b>Acknowledgement:</b> I, '+esc(gv('ap_name'))+' (ID: '+esc(gv('ap_id'))+'), acknowledge receipt of this appraisal letter.<br>'+
+    'Signature: ______________________________ &nbsp;&nbsp; Date: ______________'+
+  '</div>';
+  document.getElementById('appraisalPaper').innerHTML=html;
+}
+function apRow(label,oldVal,newVal){
+  return'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 12px">'+label+'</td>'+
+    '<td style="padding:7px 12px;text-align:right;color:#888">—</td>'+
+    '<td style="padding:7px 12px;text-align:right">'+fmtRupee(newVal)+'</td></tr>';
+}
+
+// ═══════════════════════════════════════════════
+// PDF EXPORT — LETTERS (shared engine)
+// ═══════════════════════════════════════════════
+function exportLetterPDF(paperId, filename){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF('p','pt','a4');
+  var L=44,R=551,PW=507,y=0;
+  var cGREEN=[31,78,61],cGOLD=[176,137,72],cMUTED=[110,100,96],cINK=[28,28,28],cLINE=[210,205,198];
+
+  // letterhead
+  y=38;
+  doc.setFont('times','bold');doc.setFontSize(18);doc.setTextColor(cGREEN[0],cGREEN[1],cGREEN[2]);
+  doc.text('Windesign Labs (OPC) Pvt. Ltd.',L,y);
+  y+=13;
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+  doc.text('FLAT NO 808 RACHANA, ASHWINI APT JAGDISH NAGAR, Katolroad, Nagpur - 440013, Maharashtra',L,y);
+  y+=11;
+  doc.text('CIN: U62010MH2024OPC427928  |  GSTIN: 27AADCW8668C1ZZ  |  windesign.io  |  jitu@windesign.io',L,y);
+  y+=8;
+  doc.setDrawColor(cGREEN[0],cGREEN[1],cGREEN[2]);doc.setLineWidth(1.5);doc.line(L,y,R,y);
+  y+=18;
+
+  // subtitle from paper
+  var paper=document.getElementById(paperId);
+  var subtitleEl=paper.querySelector('[style*="letter-spacing: 1px"]') || paper.querySelector('[style*="letter-spacing:1px"]');
+
+  // parse the rendered HTML for content — walk the paper div
+  // For PDF we extract key text blocks from the preview HTML
+  var content=paper.innerText||paper.textContent||'';
+  var lines=content.split('\n').map(function(l){return l.trim()}).filter(function(l){return l.length>0});
+
+  doc.setFont('times','normal');doc.setFontSize(9.5);doc.setTextColor(cINK[0],cINK[1],cINK[2]);
+
+  var maxW=PW;
+  lines.forEach(function(line){
+    if(y>790){doc.addPage();y=40;}
+    // skip header lines already drawn
+    if(line.indexOf('Windesign Labs')===0||line.indexOf('FLAT NO 808')===0||
+       line.indexOf('CIN:')===0||line.indexOf('windesign.io')===0) return;
+    // section headers → bold green
+    if(line===line.toUpperCase()&&line.length>4&&line.length<80){
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(cGREEN[0],cGREEN[1],cGREEN[2]);
+      doc.text(line,L,y);y+=13;
+      doc.setFont('times','normal');doc.setFontSize(9.5);doc.setTextColor(cINK[0],cINK[1],cINK[2]);
+      return;
+    }
+    var wrapped=doc.splitTextToSize(line,maxW);
+    wrapped.forEach(function(wl){
+      if(y>790){doc.addPage();y=40;}
+      doc.text(wl,L,y);y+=13;
+    });
+  });
+
+  // signature block
+  y+=10;
+  if(y>720){doc.addPage();y=40;}
+  doc.setDrawColor(cLINE[0],cLINE[1],cLINE[2]);doc.setLineWidth(.5);doc.line(L,y,R,y);y+=14;
+  doc.setFont('times','bold');doc.setFontSize(9);doc.setTextColor(cGREEN[0],cGREEN[1],cGREEN[2]);
+  doc.text('Windesign Labs (OPC) Pvt. Ltd.',L,y);
+  doc.addImage(SIG_B64,'PNG',R-100,y-14,100,38);
+  y+=38;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(cMUTED[0],cMUTED[1],cMUTED[2]);
+  doc.text('Authorised Signatory',R,y,{align:'right'});
+
+  doc.save(filename+'.pdf');
+}
+
+function exportOfferPDF(){exportLetterPDF('offerPaper','OfferLetter_'+gv('ol_name').replace(/\s+/g,'_'));}
+function exportInternPDF(){exportLetterPDF('internPaper','InternLetter_'+gv('il_name').replace(/\s+/g,'_'));}
+function exportAppraisalPDF(){exportLetterPDF('appraisalPaper','AppraisalLetter_'+gv('ap_name').replace(/\s+/g,'_'));}
+
+// ═══════════════════════════════════════════════
+// WORD EXPORT — LETTERS (shared engine)
+// ═══════════════════════════════════════════════
+async function exportLetterWord(paperId, filename){
+  var d=docx;
+  var Document=d.Document,Packer=d.Packer,Paragraph=d.Paragraph,TextRun=d.TextRun,
+      Table=d.Table,TableRow=d.TableRow,TableCell=d.TableCell,
+      WidthType=d.WidthType,AlignmentType=d.AlignmentType,BorderStyle=d.BorderStyle;
+  function P(t,o){o=o||{};return new Paragraph({
+    alignment:o.c?AlignmentType.CENTER:(o.r?AlignmentType.RIGHT:AlignmentType.LEFT),
+    spacing:{after:o.after==null?80:o.after},
+    children:[new TextRun({text:String(t||''),bold:o.b,size:o.s||20,color:o.col||'222222',italics:o.i})]});}
+
+  var paper=document.getElementById(paperId);
+  var content=paper.innerText||paper.textContent||'';
+  var lines=content.split('\n').map(function(l){return l.trim()}).filter(function(l){return l.length>0});
+
+  var kids=[
+    P('Windesign Labs (OPC) Pvt. Ltd.',{b:1,s:28,col:'1F4E3D'}),
+    P('FLAT NO 808 RACHANA, ASHWINI APT JAGDISH NAGAR, Katolroad, Nagpur - 440013, Maharashtra',{s:15,col:'777777'}),
+    P('CIN: U62010MH2024OPC427928  |  GSTIN: 27AADCW8668C1ZZ  |  windesign.io',{s:15,col:'777777',after:160}),
+  ];
+
+  lines.forEach(function(line){
+    if(line.indexOf('Windesign Labs')===0||line.indexOf('FLAT NO 808')===0||
+       line.indexOf('CIN:')===0||line.indexOf('windesign.io')===0||
+       line.indexOf('Authorised Signatory')===0) return;
+    var isHdr=line===line.toUpperCase()&&line.length>4&&line.length<80;
+    kids.push(P(line,isHdr?{b:1,s:17,col:'1F4E3D'}:{s:20}));
+  });
+
+  kids.push(P('',{after:120}));
+  kids.push(P('Windesign Labs (OPC) Pvt. Ltd.',{b:1,s:20,col:'1F4E3D'}));
+  kids.push(P('Authorised Signatory',{s:16,col:'888888'}));
+
+  var blob=await Packer.toBlob(new Document({sections:[{children:kids}]}));
+  saveAs(blob,filename+'.docx');
+}
+
+function exportOfferWord(){exportLetterWord('offerPaper','OfferLetter_'+gv('ol_name').replace(/\s+/g,'_'));}
+function exportInternWord(){exportLetterWord('internPaper','InternLetter_'+gv('il_name').replace(/\s+/g,'_'));}
+function exportAppraisalWord(){exportLetterWord('appraisalPaper','AppraisalLetter_'+gv('ap_name').replace(/\s+/g,'_'));}
+</script>
+</body>
+</html>
