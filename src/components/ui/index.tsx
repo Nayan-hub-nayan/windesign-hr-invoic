@@ -1,18 +1,42 @@
 import type { ReactNode } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
 export function TopBar() {
+  const { user, signOut } = useAuth()
+
   return (
     <div className="bg-green text-white border-b-[3px] border-gold">
-      <div className="max-w-[1280px] mx-auto px-8 py-3.5 flex items-center justify-between">
+      <div className="max-w-[1280px] mx-auto px-8 py-3.5 flex items-center justify-between gap-4">
         <div className="font-playfair text-xl tracking-wide">
           <div>Windesign</div>
           <div className="font-serif text-[10px] tracking-[3px] uppercase opacity-70 mt-0.5">
             HR & Invoice Suite
           </div>
         </div>
-        <span className="text-[10px] tracking-[2.5px] uppercase opacity-60 font-serif">
-          Internal Tooling
-        </span>
+        <div className="flex items-center gap-4">
+          {user && (
+            <div className="flex items-center gap-2.5">
+              {user.picture && (
+                <img
+                  src={user.picture}
+                  alt=""
+                  className="w-7 h-7 rounded-full border border-white/30"
+                />
+              )}
+              <div className="text-right hidden sm:block">
+                <div className="text-[11px] font-serif leading-tight">{user.name}</div>
+                <div className="text-[9px] opacity-70 font-serif">{user.email}</div>
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={signOut}
+            className="text-[10px] tracking-[1.5px] uppercase opacity-80 font-serif border border-white/30 px-3 py-1.5 hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   )
