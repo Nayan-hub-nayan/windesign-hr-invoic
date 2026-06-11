@@ -14,4 +14,5 @@ export function isEmailAllowed(email: string): boolean {
   const domain = getAllowedEmailDomain()
   if (!domain) return true
   return email.toLowerCase().endsWith(domain)
+
 }
